@@ -7,4 +7,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="client\" />
+    <Folder Include="docs\" />
+    <Folder Include="lib\" />
+    <Folder Include="shared\lin64\" />
+    <Folder Include="shared\win64\" />
+    <Folder Include="shared\osx64\" />
+    <Folder Include="tools\" />
+    <Folder Include="test\" />
+  </ItemGroup>
+
 </Project>

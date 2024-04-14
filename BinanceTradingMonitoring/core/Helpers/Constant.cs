@@ -1,6 +1,4 @@
-﻿
-
-namespace BinanceTradingMonitoring.Helpers
+﻿namespace BinanceTradingMonitoring.core.Helpers
 {
     /// <summary>
     /// Provides constant values for interacting with the Binance API.

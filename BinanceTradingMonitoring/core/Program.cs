@@ -1,17 +1,17 @@
-﻿using BinanceTradingMonitoring.Bussiness;
-using BinanceTradingMonitoring.Helpers;
+﻿using BinanceTradingMonitoring.core.Bussiness;
+using BinanceTradingMonitoring.core.Helpers;
 
-namespace MainClass
+namespace BinanceTradingMonitoring.core
 {
     class Program
     {
         static void Main(string[] args)
         {
             // Disable Quick Edit Mode to prevent stopping when clicking on the console
-            ConsoleHelper.DisableQuickEditMode();                         
+            ConsoleHelper.DisableQuickEditMode();
             // Run the Binance trade monitoring functionality
             new BinanceTrade().RunTradeMonitor();
-      
+
         }
     }
 }

@@ -1,9 +1,7 @@
-﻿using BinanceTradingMonitoring.Helpers;
+﻿using BinanceTradingMonitoring.core.Helpers;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
 
-namespace BinanceTradingMonitoring.Bussiness
+namespace BinanceTradingMonitoring.core.Bussiness
 {
     public class BinanceTrade
     {

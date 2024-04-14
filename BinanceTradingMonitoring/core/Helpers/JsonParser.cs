@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace BinanceTradingMonitoring.Helpers
+namespace BinanceTradingMonitoring.core.Helpers
 {
     /// <summary>
     /// Provides methods for parsing and manipulating JSON data without reflection.

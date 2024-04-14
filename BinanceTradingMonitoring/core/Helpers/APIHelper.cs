@@ -1,8 +1,8 @@
-﻿using BinanceTradingMonitoring.Bussiness;
+﻿using BinanceTradingMonitoring.core.Bussiness;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace BinanceTradingMonitoring.Helpers
+namespace BinanceTradingMonitoring.core.Helpers
 {/// <summary>
  /// Helper class for interacting with the Binance API.
  /// </summary>
