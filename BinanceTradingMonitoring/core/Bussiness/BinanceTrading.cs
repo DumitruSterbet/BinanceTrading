@@ -127,7 +127,7 @@ namespace BinanceTradingMonitoring.core.Bussiness
         private Dictionary<int, string> DisplayAvailableCurrencies()
         {
             // Get the first 20 currency pairs
-            Dictionary<int, string> currencyPairs = GetTradePairs()
+            Dictionary<int, string> currencyPairs = GetTradePairs().Where(u=>u.Value.Contains("BTC"))
                 .Take(20)
                 .ToDictionary(pair => pair.Key, pair => pair.Value);
 

@@ -55,6 +55,7 @@ namespace BinanceTradingMonitoring.core.Helpers
                     return currenciesList;
                 }
                 else
+                
                 {
                     throw new Exception($"No properties {Constant.Symbols} element found in JSON. {json}");
                 }
