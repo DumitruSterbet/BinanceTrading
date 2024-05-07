@@ -9,6 +9,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowSpecificOrigin",
+            builder =>
+            {
+                builder.WithOrigins("*") // Specify the allowed origins here
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+    });
+
+    // Other service configurations...
+
+
 // Register the implementation of IApiConnector
 builder.Services.AddSingleton<IApiConnector, ApiConnector>(); // Assuming ApiConnector implements IApiConnector
 
@@ -23,7 +37,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+// Enable CORS middleware
+app.UseCors("AllowSpecificOrigin");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

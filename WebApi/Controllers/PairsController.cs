@@ -1,5 +1,6 @@
 using BinanceTradingMonitoring.core.Bussiness.Interfaces;
 using BinanceTradingMonitoring.core.Helpers;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -19,7 +20,7 @@ namespace WebApi.Controllers
             _logger = logger;
             _apiConnector = apiConnector;
         }
-
+        [EnableCors("AllowSpecificOrigin")]
         [HttpGet(Name = "GetPairs")]
         public List<string> GetCurrencyList()
         {
