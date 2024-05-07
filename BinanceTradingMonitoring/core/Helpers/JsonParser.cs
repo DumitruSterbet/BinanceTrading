@@ -5,7 +5,7 @@ namespace BinanceTradingMonitoring.core.Helpers
     /// <summary>
     /// Provides methods for parsing and manipulating JSON data without reflection.
     /// </summary>
-    internal class JsonParser
+    public class JsonParser
     {
         /// <summary>
         /// Checks if the trade JSON contains the Buying Flag property with the value "true", indicating it's a buying trade.

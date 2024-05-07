@@ -1,21 +1,30 @@
-﻿using BinanceTradingMonitoring.core.Helpers;
+﻿using BinanceTradingMonitoring.core.Bussiness.Interfaces;
+using BinanceTradingMonitoring.core.Helpers;
 using System.Collections.Concurrent;
+using System.Net.WebSockets;
+using System.Text;
 
-namespace BinanceTradingMonitoring.core.Bussiness
+namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
 {
-    public class BinanceTrade
+    public class BinanceTrade : IBinanceTrading
     {
-        private readonly List<string> _selectedPairs = new List<string>();
+        public readonly List<string> _selectedPairs = new List<string>();
         // Is used for displaying quantity of trade for test
         // public static int _webSocketResponseCount = 0;
         // public static int _countOfDisplayedTrades = 0;
-        private static readonly ConcurrentDictionary<string, List<string>> _tradesData = new ConcurrentDictionary<string, List<string>>();
+        public static readonly ConcurrentDictionary<string, List<string>> _tradesData = new ConcurrentDictionary<string, List<string>>();
         // Dictionary to store the trades to display
-        private static List<string> _tradesToDisplay = new List<string>();
+        public static Stack<string> _tradesToDisplay = new Stack<string>();
+        public JsonParser _jsonParser = new JsonParser();
         // Helpers 
-        private ApiHelper _apiHelper = new ApiHelper();
-        private JsonParser _jsonParser = new JsonParser();
+        public IApiConnector _apiHelper;
+       
+        
 
+        public BinanceTrade(IApiConnector apiHelper)
+        {
+            _apiHelper = apiHelper;
+        }
         public void RunTradeMonitor()
         {
             try
@@ -47,12 +56,12 @@ namespace BinanceTradingMonitoring.core.Bussiness
         /// <summary>
         /// Subscribes to WebSocket streams for each selected trading pair.
         /// </summary>
-        private void SubscribeToTrades()
+        public void SubscribeToTrades()
         {
             for (int i = 0; i < _selectedPairs.Count; i++)
             {
                 string pair = _selectedPairs[i];
-                Thread subscribeThread = new Thread(() => _apiHelper.SubscribeToPair(pair));
+                Thread subscribeThread = new Thread(() => SendWebSocketRequest(pair));
                 subscribeThread.Start();
             }
         }
@@ -61,13 +70,48 @@ namespace BinanceTradingMonitoring.core.Bussiness
         /// Retrieves a list of trade pairs from the API.
         /// </summary>
         /// <returns>A list of tuples containing trade pair information.</returns>
-        private Dictionary<int, string> GetTradePairs()
+        public Dictionary<int, string> GetTradePairs()
         {
             // Get all trade pairs data
-            string json = _apiHelper.GetTradePairsAPI();
+            var json = _apiHelper.SendHttpGetRequest("url");
             // Deserialize JSON without using reflection
-            return _jsonParser.GetCurrencies(json);
+            return _jsonParser.GetCurrencies(json.ToString());
 
+        }
+
+        /// <summary>
+        /// Sends a WebSocket request to the specified URL.
+        /// </summary>
+        /// <param name="url">The URL to connect to via WebSocket.</param>
+        /// <returns>The response from the WebSocket request.</returns>
+        public object SendWebSocketRequest(string pair)
+        {
+            try
+            {
+   
+                using (ClientWebSocket client = new ClientWebSocket())
+                {
+                    client.ConnectAsync(new Uri(Constant.GetSubscriptionsURL.Replace("{pair}", pair.ToLower())), CancellationToken.None).GetAwaiter().GetResult();
+                    while (client.State == WebSocketState.Open)
+                    {
+                        byte[] buffer = new byte[1024];
+                        var result = client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).GetAwaiter().GetResult();
+                        if (result.MessageType == WebSocketMessageType.Text)
+                        {
+                            string tradeData = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                            AddTrade(pair, tradeData);
+                            //Is use for test quantity of displayed trades
+                            // BinanceTrade._webSocketResponseCount++;
+                        }
+                    }
+                }
+                return new object();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"WebSocket request error: {e.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -75,7 +119,7 @@ namespace BinanceTradingMonitoring.core.Bussiness
         /// </summary>
         /// <param name="pair">The trading pair for which the trade data is being added.</param>
         /// <param name="tradeData">The trade data to be added.</param>
-        public static void AddTrade(string pair, string tradeData)
+        public  void AddTrade(string pair, string tradeData)
         {
             if (!_tradesData.ContainsKey(pair))
             {
@@ -89,14 +133,14 @@ namespace BinanceTradingMonitoring.core.Bussiness
             // Add trades for display on console
             lock (_tradesToDisplay)
             {
-                _tradesToDisplay.Add(tradeData);
+                _tradesToDisplay.Push(tradeData);
             }
         }
 
         /// <summary>
         /// Periodically removes old trades from the collection of trades for each selected trading pair.
         /// </summary>
-        private void CleanupOldTrades()
+        public void CleanupOldTrades()
         {
             while (true)
             {
@@ -124,10 +168,10 @@ namespace BinanceTradingMonitoring.core.Bussiness
         /// Displays the available currencies for trading.
         /// </summary>
         /// <returns>A dictionary representing currency pairs with integer keys and string values.</returns>
-        private Dictionary<int, string> DisplayAvailableCurrencies()
+        public Dictionary<int, string> DisplayAvailableCurrencies()
         {
             // Get the first 20 currency pairs
-            Dictionary<int, string> currencyPairs = GetTradePairs().Where(u=>u.Value.Contains("BTC"))
+            Dictionary<int, string> currencyPairs = GetTradePairs().Where(u => u.Value.Contains("BTC"))
                 .Take(20)
                 .ToDictionary(pair => pair.Key, pair => pair.Value);
 
@@ -146,7 +190,7 @@ namespace BinanceTradingMonitoring.core.Bussiness
         /// Allows the user to select currency pairs from the provided list.
         /// </summary>
         /// <param name="currencyPairs">A dictionary representing available currency pairs with integer keys and string values.</param>
-        private void SelectCurrenciesPairs(Dictionary<int, string> currencyPairs)
+        public void SelectCurrenciesPairs(Dictionary<int, string> currencyPairs)
         {
             Console.WriteLine("Enter trading pairs from the previous list via Id (using comma as delimiter): ");
             string selectedPairsInput = Console.ReadLine();
@@ -178,23 +222,26 @@ namespace BinanceTradingMonitoring.core.Bussiness
         /// <summary>
         /// Displays added trades in console.
         /// </summary>
-        private void DisplayTrades()
+        public void DisplayTrades()
         {
             while (true)
             {
                 lock (_tradesToDisplay)
                 {
-                    for (int i = 0; i < _tradesToDisplay.Count; i++)
+
+                    if (_tradesToDisplay.Count != 0)
                     {
-                        string trade = _tradesToDisplay[i];
+                        string trade = _tradesToDisplay.Pop();
                         // Console.WriteLine($"Counts of displayed trades: {++BinanceTrade._countOfDisplayedTrades} Counts of requested trades data: {BinanceTrade._webSocketResponseCount}");
                         Console.ForegroundColor = _jsonParser.IsBuyingTrade(trade) ? ConsoleColor.Green : ConsoleColor.Red;
                         // Remove trades from collection for dsiplaying trades
-                        _tradesToDisplay.Remove(trade);
+
                         Console.WriteLine($" {trade}");
                     }
                 }
             }
         }
+
+       
     }
 }

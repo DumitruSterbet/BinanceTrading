@@ -1,18 +1,25 @@
-﻿using BinanceTradingMonitoring.core.Bussiness;
+﻿using BinanceTradingMonitoring.core.Bussiness.Interfaces;
+using BinanceTradingMonitoring.core.Helpers;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace BinanceTradingMonitoring.core.Helpers
-{/// <summary>
- /// Helper class for interacting with the Binance API.
- /// </summary>
-    public class ApiHelper
+namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
+{
+    /// <summary>
+    /// Class for interacting with the API.
+    /// </summary>
+    public class ApiConnector : IApiConnector
     {
+
+        public ConcurrentDictionary<string, ConcurrentBag<string>> _dictionary;
         /// <summary>
-        /// Retrieves the trade pairs from the Binance API.
+        /// Sends an HTTP GET request to the specified URL.
         /// </summary>
-        /// <returns>The JSON response containing trade pairs.</returns>
-        public string GetTradePairsAPI()
+        /// <param name="url">The URL to send the request to.</param>
+        /// <returns>The response from the HTTP GET request.</returns>
+        public string SendHttpGetRequest(string url)
         {
             try
             {
@@ -20,7 +27,8 @@ namespace BinanceTradingMonitoring.core.Helpers
                 {
                     HttpResponseMessage response = client.GetAsync(Constant.GetCurrenciesPairsURL).Result;
                     response.EnsureSuccessStatusCode();
-                    return response.Content.ReadAsStringAsync().Result;
+                     string result =response.Content.ReadAsStringAsync().Result;
+                    return result;
                 }
             }
             catch (Exception e)
@@ -30,14 +38,17 @@ namespace BinanceTradingMonitoring.core.Helpers
             }
         }
 
+
         /// <summary>
-        /// Subscribes to the WebSocket stream for the specified trading pair.
+        /// Sends a WebSocket request to the specified URL.
         /// </summary>
-        /// <param name="pair">The trading pair to subscribe to.</param>
-        public void SubscribeToPair(string pair)
+        /// <param name="url">The URL to connect to via WebSocket.</param>
+        /// <returns>The response from the WebSocket request.</returns>
+        public object SendWebSocketRequest(string url)
         {
             try
             {
+                var pair = "dd";
                 using (ClientWebSocket client = new ClientWebSocket())
                 {
                     client.ConnectAsync(new Uri(Constant.GetSubscriptionsURL.Replace("{pair}", pair.ToLower())), CancellationToken.None).GetAwaiter().GetResult();
@@ -48,18 +59,32 @@ namespace BinanceTradingMonitoring.core.Helpers
                         if (result.MessageType == WebSocketMessageType.Text)
                         {
                             string tradeData = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                            BinanceTrade.AddTrade(pair, tradeData);
+                            AddWebSocketResponse(pair, tradeData);
                             //Is use for test quantity of displayed trades
                             // BinanceTrade._webSocketResponseCount++;
                         }
                     }
                 }
+                return new object();
             }
             catch (Exception e)
             {
-                Console.WriteLine($"HTTP request error: {e.Message}");
+                Console.WriteLine($"WebSocket request error: {e.Message}");
                 throw;
             }
         }
+        private void AddWebSocketResponse(string pair, string inputTradesData)
+        {
+            if (_dictionary.ContainsKey(pair))
+            {
+                _dictionary[pair].Add(inputTradesData);
+            }
+            else
+            {
+                _dictionary.TryAdd(pair,new ConcurrentBag<string> { inputTradesData } );
+            }
+            
+        }
     }
 }
+
