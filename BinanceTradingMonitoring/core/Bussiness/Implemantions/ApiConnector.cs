@@ -13,12 +13,13 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
     public class ApiConnector : IApiConnector
     {
 
-        public ConcurrentDictionary<string, ConcurrentBag<string>> _dictionary;
+        public ConcurrentDictionary<string, ConcurrentBag<string>> _dictionary = new ConcurrentDictionary<string, ConcurrentBag<string>>();
         /// <summary>
         /// Sends an HTTP GET request to the specified URL.
         /// </summary>
         /// <param name="url">The URL to send the request to.</param>
         /// <returns>The response from the HTTP GET request.</returns>
+
         public string SendHttpGetRequest(string url)
         {
             try

@@ -10,20 +10,20 @@ namespace WebApi.Controllers
     [EnableCors("AllowSpecificOrigin")]
     public class PairsController : ControllerBase
     {
-       
+
         private readonly IApiConnector _apiConnector;
         private readonly ILogger<PairsController> _logger;
         private readonly IJsonParser _jsonParser;
 
-        public PairsController(ILogger<PairsController> logger, IApiConnector apiConnector,IJsonParser jsonParser)
+        public PairsController(ILogger<PairsController> logger, IApiConnector apiConnector, IJsonParser jsonParser)
         {
             _logger = logger;
             _apiConnector = apiConnector;
             _jsonParser = jsonParser;
         }
-      
-        [HttpGet(Name = "GetPairs")]
-        public List<string> GetCurrencyList()
+
+        [HttpGet(Name = "GetCurrencyList")]
+        public IActionResult GetCurrencyList()
         {
             // Send HTTP GET request to the API endpoint
             string jsonResponse = _apiConnector.SendHttpGetRequest("");
@@ -34,16 +34,16 @@ namespace WebApi.Controllers
             // Extract currency values from the dictionary
             List<string> currencyValues = new List<string>(currencyPairs.Values);
 
-            return currencyValues;
+            return Ok(currencyValues);
         }
 
         [HttpPost(Name = "SubscribeToTrades")]
-        public IActionResult SubsribeToTrades([FromBody]List<string> selectedPairs)
+        public IActionResult SubsribeToTrades([FromBody] List<string> selectedPairs)
         {
             selectedPairs = new List<string> {  "ETHBTC",
   "LTCBTC",
   "BNBBTC"};
-           foreach (var pair in selectedPairs)
+            foreach (var pair in selectedPairs)
             {
                 Thread subscribeThread = new Thread(() => _apiConnector.SendWebSocketRequest(pair));
                 subscribeThread.Start();
@@ -51,14 +51,13 @@ namespace WebApi.Controllers
 
             return Ok();
         }
-        /*
 
-        [HttpGet(Name = "GetTradesInfo")]
-        public IActionResult GetTradesInfo(string selectedPair)
+
+        [HttpGet(Name = "GetTradesInfo")] // Changed action name to "GetTradesInfo"
+        public IActionResult GetTradesInfo()
         {
-           
 
             return Ok();
-        }*/
+        }
     }
 }
