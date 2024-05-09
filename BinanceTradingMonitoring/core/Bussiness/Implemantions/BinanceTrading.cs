@@ -8,22 +8,22 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
 {
     public class BinanceTrade : IBinanceTrading
     {
-        public readonly List<string> _selectedPairs = new List<string>();
+        private readonly List<string> _selectedPairs = new List<string>();
         // Is used for displaying quantity of trade for test
         // public static int _webSocketResponseCount = 0;
         // public static int _countOfDisplayedTrades = 0;
-        public static readonly ConcurrentDictionary<string, List<string>> _tradesData = new ConcurrentDictionary<string, List<string>>();
+        private  readonly ConcurrentDictionary<string, List<string>> _tradesData = new ConcurrentDictionary<string, List<string>>();
         // Dictionary to store the trades to display
-        public static Stack<string> _tradesToDisplay = new Stack<string>();
-        public JsonParser _jsonParser = new JsonParser();
-        // Helpers 
-        public IApiConnector _apiHelper;
-       
-        
+        private Stack<string> _tradesToDisplay = new Stack<string>();
+    
+        //helpers
+        private IJsonParser _jsonParser;
+        private IApiConnector _apiHelper;             
 
-        public BinanceTrade(IApiConnector apiHelper)
+        public BinanceTrade(IApiConnector apiHelper, IJsonParser jsonParser)
         {
             _apiHelper = apiHelper;
+            _jsonParser = jsonParser;
         }
         public void RunTradeMonitor()
         {
@@ -58,9 +58,9 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
         /// </summary>
         public void SubscribeToTrades()
         {
-            for (int i = 0; i < _selectedPairs.Count; i++)
+            foreach (string pair in _selectedPairs)
             {
-                string pair = _selectedPairs[i];
+
                 Thread subscribeThread = new Thread(() => SendWebSocketRequest(pair));
                 subscribeThread.Start();
             }
@@ -87,8 +87,7 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
         public object SendWebSocketRequest(string pair)
         {
             try
-            {
-   
+            {  
                 using (ClientWebSocket client = new ClientWebSocket())
                 {
                     client.ConnectAsync(new Uri(Constant.GetSubscriptionsURL.Replace("{pair}", pair.ToLower())), CancellationToken.None).GetAwaiter().GetResult();
@@ -99,9 +98,7 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
                         if (result.MessageType == WebSocketMessageType.Text)
                         {
                             string tradeData = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                            AddTrade(pair, tradeData);
-                            //Is use for test quantity of displayed trades
-                            // BinanceTrade._webSocketResponseCount++;
+                            AddTrade(pair, tradeData);                           
                         }
                     }
                 }
@@ -144,9 +141,8 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
         {
             while (true)
             {
-                for (int i = 0; i < _selectedPairs.Count; i++)
+                foreach (string pair in _selectedPairs)
                 {
-                    string pair = _selectedPairs[i];
                     if (_tradesData.TryGetValue(pair, out var trades))
                     {
                         // Remove old trades if the number of trades exceeds the maximum limit
@@ -176,12 +172,9 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
                 .ToDictionary(pair => pair.Key, pair => pair.Value);
 
             Console.WriteLine("List of trading currency pairs:");
-            int[] keys = currencyPairs.Keys.ToArray();
-            for (int i = 0; i < keys.Length; i++)
+            foreach (KeyValuePair<int, string> pair in currencyPairs)
             {
-                int key = keys[i];
-                string value = currencyPairs[key];
-                Console.WriteLine($"Id: {key} {value}");
+                Console.WriteLine($"Id: {pair.Key} {pair.Value}");
             }
             return currencyPairs;
         }
@@ -197,9 +190,8 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
             // Split the input by comma to get individual selected pair IDs
             string[] selectedPairIds = selectedPairsInput.Split(',');
 
-            for (int i = 0; i < selectedPairIds.Length; i++)
+            foreach (string pairId in selectedPairIds)
             {
-                string pairId = selectedPairIds[i];
                 if (int.TryParse(pairId, out int id))
                 {
                     if (currencyPairs.TryGetValue(id, out string value))

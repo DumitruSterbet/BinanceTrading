@@ -1,5 +1,4 @@
 ﻿using Autofac;
-using BinanceTradingMonitoring.core.Bussiness;
 using BinanceTradingMonitoring.core.Bussiness.Implemantions;
 using BinanceTradingMonitoring.core.Bussiness.Interfaces;
 using BinanceTradingMonitoring.core.Helpers;
@@ -16,9 +15,10 @@ namespace BinanceTradingMonitoring.core
             // Set up the dependency injection container
             var builder = new ContainerBuilder();
 
-            // Register your dependencies
+            // Register dependencies
             builder.RegisterType<BinanceTrade>().As<IBinanceTrading>();
             builder.RegisterType<ApiConnector>().As<IApiConnector>();
+            builder.RegisterType<JsonParser>().As<IJsonParser>();
 
             // Build the container
             var container = builder.Build();

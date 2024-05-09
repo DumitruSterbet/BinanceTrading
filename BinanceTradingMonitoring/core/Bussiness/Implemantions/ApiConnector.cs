@@ -44,11 +44,10 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
         /// </summary>
         /// <param name="url">The URL to connect to via WebSocket.</param>
         /// <returns>The response from the WebSocket request.</returns>
-        public object SendWebSocketRequest(string url)
+        public void SendWebSocketRequest(string pair)
         {
             try
             {
-                var pair = "dd";
                 using (ClientWebSocket client = new ClientWebSocket())
                 {
                     client.ConnectAsync(new Uri(Constant.GetSubscriptionsURL.Replace("{pair}", pair.ToLower())), CancellationToken.None).GetAwaiter().GetResult();
@@ -64,8 +63,7 @@ namespace BinanceTradingMonitoring.core.Bussiness.Implemantions
                             // BinanceTrade._webSocketResponseCount++;
                         }
                     }
-                }
-                return new object();
+                }               
             }
             catch (Exception e)
             {

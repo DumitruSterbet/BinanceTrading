@@ -1,11 +1,14 @@
-﻿using System.Text.Json;
+﻿using BinanceTradingMonitoring.core.Bussiness.Interfaces;
+using BinanceTradingMonitoring.core.Models;
+using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace BinanceTradingMonitoring.core.Helpers
 {
     /// <summary>
     /// Provides methods for parsing and manipulating JSON data without reflection.
     /// </summary>
-    public class JsonParser
+    public class JsonParser : IJsonParser
     {
         /// <summary>
         /// Checks if the trade JSON contains the Buying Flag property with the value "true", indicating it's a buying trade.
@@ -27,6 +30,30 @@ namespace BinanceTradingMonitoring.core.Helpers
             }
 
         }
+
+        /// <summary>
+        /// Deserializes the specified JSON string into an object of the specified type.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to deserialize.</typeparam>
+        /// <param name="json">The JSON string to deserialize.</param>
+        /// <returns>The deserialized object.</returns>
+        public T Deserialize<T>(string json)
+        {
+            return JsonConvert.DeserializeObject<T>(json);
+        }
+
+        /// <summary>
+        /// Serializes the specified object into a JSON string.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to serialize.</typeparam>
+        /// <param name="obj">The object to serialize.</param>
+        /// <returns>The JSON string representing the serialized object.</returns>
+        public string Serialize<T>(T obj)
+        {
+            return JsonConvert.SerializeObject(obj);
+        }
+
+
         /// <summary>
         /// Parses the provided JSON string to retrieve a list of currencies.
         /// </summary>

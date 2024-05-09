@@ -1,5 +1,5 @@
+using BinanceTradingMonitoring.core.Bussiness.Implemantions;
 using BinanceTradingMonitoring.core.Bussiness.Interfaces;
-using BinanceTradingMonitoring.core.Helpers;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,20 +7,21 @@ namespace WebApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [EnableCors("AllowSpecificOrigin")]
     public class PairsController : ControllerBase
     {
        
         private readonly IApiConnector _apiConnector;
-
         private readonly ILogger<PairsController> _logger;
-        private readonly JsonParser _jsonParser= new JsonParser();
+        private readonly IJsonParser _jsonParser;
 
-        public PairsController(ILogger<PairsController> logger, IApiConnector apiConnector)
+        public PairsController(ILogger<PairsController> logger, IApiConnector apiConnector,IJsonParser jsonParser)
         {
             _logger = logger;
             _apiConnector = apiConnector;
+            _jsonParser = jsonParser;
         }
-        [EnableCors("AllowSpecificOrigin")]
+      
         [HttpGet(Name = "GetPairs")]
         public List<string> GetCurrencyList()
         {
@@ -35,5 +36,29 @@ namespace WebApi.Controllers
 
             return currencyValues;
         }
+
+        [HttpPost(Name = "SubscribeToTrades")]
+        public IActionResult SubsribeToTrades([FromBody]List<string> selectedPairs)
+        {
+            selectedPairs = new List<string> {  "ETHBTC",
+  "LTCBTC",
+  "BNBBTC"};
+           foreach (var pair in selectedPairs)
+            {
+                Thread subscribeThread = new Thread(() => _apiConnector.SendWebSocketRequest(pair));
+                subscribeThread.Start();
+            }
+
+            return Ok();
+        }
+        /*
+
+        [HttpGet(Name = "GetTradesInfo")]
+        public IActionResult GetTradesInfo(string selectedPair)
+        {
+           
+
+            return Ok();
+        }*/
     }
 }

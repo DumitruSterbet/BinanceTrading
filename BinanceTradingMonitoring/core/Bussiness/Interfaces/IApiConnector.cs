@@ -3,6 +3,6 @@
     public interface IApiConnector
     {
         public string SendHttpGetRequest(string url);
-        object SendWebSocketRequest(string url);
+        void SendWebSocketRequest(string url);
     }
 }
